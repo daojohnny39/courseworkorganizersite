@@ -1,0 +1,13 @@
+# Terminal 1 - Backend
+cd "e:\Personal Projects\PlaySite\backend"
+node server.js
+
+# Terminal 2 - Frontend  
+cd "e:\Personal Projects\PlaySite\frontend"
+npm run dev
+
+http://localhost:5173
+
+# To STOP the servers:
+Press Ctrl + C in each terminal window.
+If prompted "Terminate batch job (Y/N)?", type Y and press Enter.
