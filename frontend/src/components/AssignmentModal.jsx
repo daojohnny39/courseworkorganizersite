@@ -3,20 +3,22 @@ import { X } from 'lucide-react';
 import { createAssignment, updateAssignment } from '../api';
 import { useToast } from '../context/ToastContext';
 
-const TYPES   = ['homework','exam','quiz','project','lab','reading','other'];
-const STATUSES = ['pending','in-progress','completed','missed'];
+const TYPES = ['homework', 'exam', 'quiz', 'project', 'lab', 'reading', 'other'];
+const STATUSES = ['pending', 'in-progress', 'completed', 'missed'];
 
 export default function AssignmentModal({ assignment, courses, defaultCourseId, onClose, onSave }) {
   const toast = useToast();
   const editing = !!assignment;
 
   const [form, setForm] = useState({
-    course_id:   assignment?.course_id   ?? defaultCourseId ?? (courses[0]?.id ?? ''),
-    title:       assignment?.title       ?? '',
+    course_id: assignment?.course_id ?? defaultCourseId ?? (courses[0]?.id ?? ''),
+    title: assignment?.title ?? '',
     description: assignment?.description ?? '',
-    type:        assignment?.type        ?? 'homework',
-    due_date:    assignment?.due_date    ?? '',
-    status:      assignment?.status      ?? 'pending',
+    type: assignment?.type ?? 'homework',
+    start_date: assignment?.start_date ?? '',
+    end_date: assignment?.end_date ?? '',
+    due_date: assignment?.due_date ?? '',
+    status: assignment?.status ?? 'pending',
   });
   const [loading, setLoading] = useState(false);
 
@@ -30,6 +32,8 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
       let saved;
       const payload = {
         ...form,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
         due_date: form.due_date || null,
       };
       if (editing) {
@@ -53,7 +57,7 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
       <div className="modal">
         <div className="modal-header">
           <h2 className="modal-title">{editing ? 'Edit Assignment' : 'Add Assignment'}</h2>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18}/></button>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={18} /></button>
         </div>
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
@@ -89,6 +93,17 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
                 <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
                   {STATUSES.map(s => <option key={s}>{s}</option>)}
                 </select>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Start Date</label>
+                <input className="form-input" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">End Date</label>
+                <input className="form-input" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} />
               </div>
             </div>
 
