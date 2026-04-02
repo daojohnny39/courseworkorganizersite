@@ -2,20 +2,15 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// GET all courses
+// GET all courses (scoped to logged-in user)
 router.get('/', (req, res) => {
   try {
     const { semester, year } = req.query;
-    let query = 'SELECT * FROM courses';
-    const params = [];
+    let query = 'SELECT * FROM courses WHERE user_id = ?';
+    const params = [req.user.id];
 
-    if (semester && year) {
-      query += ' WHERE semester = ? AND year = ?';
-      params.push(semester, year);
-    } else if (semester) {
-      query += ' WHERE semester = ?';
-      params.push(semester);
-    }
+    if (semester) { query += ' AND semester = ?'; params.push(semester); }
+    if (year)     { query += ' AND year = ?';     params.push(Number(year)); }
 
     query += ' ORDER BY created_at DESC';
     const courses = db.prepare(query).all(...params);
@@ -25,10 +20,10 @@ router.get('/', (req, res) => {
   }
 });
 
-// GET single course with assignments
+// GET single course with assignments (scoped to user)
 router.get('/:id', (req, res) => {
   try {
-    const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(req.params.id);
+    const course = db.prepare('SELECT * FROM courses WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!course) return res.status(404).json({ error: 'Course not found' });
 
     const assignments = db.prepare('SELECT * FROM assignments WHERE course_id = ? ORDER BY due_date ASC').all(req.params.id);
@@ -38,7 +33,7 @@ router.get('/:id', (req, res) => {
   }
 });
 
-// POST create course
+// POST create course (attached to logged-in user)
 router.post('/', (req, res) => {
   try {
     const { name, code, instructor, credits, color, semester, year, target_grade } = req.body;
@@ -46,8 +41,8 @@ router.post('/', (req, res) => {
       return res.status(400).json({ error: 'name, code, semester, and year are required' });
     }
     const result = db.prepare(
-      'INSERT INTO courses (name, code, instructor, credits, color, semester, year, target_grade) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).run(name, code, instructor || null, credits || 3, color || '#6366f1', semester, year, target_grade || 'A');
+      'INSERT INTO courses (user_id, name, code, instructor, credits, color, semester, year, target_grade) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).run(req.user.id, name, code, instructor || null, credits || 3, color || '#6366f1', semester, year, target_grade || 'A');
 
     const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(course);
@@ -56,11 +51,11 @@ router.post('/', (req, res) => {
   }
 });
 
-// PUT update course
+// PUT update course (scoped to user)
 router.put('/:id', (req, res) => {
   try {
     const { name, code, instructor, credits, color, semester, year, grade, target_grade } = req.body;
-    const existing = db.prepare('SELECT * FROM courses WHERE id = ?').get(req.params.id);
+    const existing = db.prepare('SELECT * FROM courses WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!existing) return res.status(404).json({ error: 'Course not found' });
 
     db.prepare(
@@ -85,10 +80,10 @@ router.put('/:id', (req, res) => {
   }
 });
 
-// DELETE course
+// DELETE course (scoped to user)
 router.delete('/:id', (req, res) => {
   try {
-    const existing = db.prepare('SELECT * FROM courses WHERE id = ?').get(req.params.id);
+    const existing = db.prepare('SELECT * FROM courses WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!existing) return res.status(404).json({ error: 'Course not found' });
     db.prepare('DELETE FROM courses WHERE id = ?').run(req.params.id);
     res.json({ message: 'Course deleted successfully' });

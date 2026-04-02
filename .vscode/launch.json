@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/johnnydao/Documents/Personal/Coding/Coursetrack/courseworkorganizersite",
+      "program": "/Users/johnnydao/Documents/Personal/Coding/Coursetrack/courseworkorganizersite/build/Debug/outDebug"
+    }
+  ]
+}

@@ -2,16 +2,16 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 
-// GET dashboard stats
+// GET dashboard stats (scoped to logged-in user)
 router.get('/stats', (req, res) => {
   try {
     const { semester, year } = req.query;
-    let courseFilter = '1=1';
-    const params = [];
+    let courseFilter = 'c.user_id = ?';
+    const params = [req.user.id];
 
     if (semester && year) {
-      courseFilter = 'c.semester = ? AND c.year = ?';
-      params.push(semester, year);
+      courseFilter += ' AND c.semester = ? AND c.year = ?';
+      params.push(semester, Number(year));
     }
 
     const totalCourses = db.prepare(`SELECT COUNT(*) as count FROM courses c WHERE ${courseFilter}`).get(...params);

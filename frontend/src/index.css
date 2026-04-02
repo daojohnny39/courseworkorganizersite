@@ -87,6 +87,40 @@ body::before {
   margin-left: 260px;
   padding: 32px;
   min-height: 100vh;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Sidebar toggle button (hamburger) ─────────────────────────── */
+.sidebar-toggle {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--transition), color var(--transition);
+}
+.sidebar-toggle:hover {
+  background: var(--bg-hover);
+}
+
+/* ── Sidebar backdrop overlay (mobile) ─────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
 /* ── Sidebar ───────────────────────────────────────────────────── */
@@ -103,6 +137,12 @@ body::before {
   padding: 24px 16px;
   z-index: 100;
   backdrop-filter: blur(20px);
+  transform: translateX(0);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar--closed {
+  transform: translateX(-260px);
 }
 
 .sidebar-logo {
@@ -982,16 +1022,7 @@ body::before {
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-
-  .main-content {
-    margin-left: 0;
-    padding: 20px 16px;
-  }
-
+@media (max-width: 1024px) {
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -1133,7 +1164,7 @@ body::before {
 }
 
 .cal-cell {
-  min-height: 90px;
+  min-height: 80px;
   padding: 8px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -1141,7 +1172,7 @@ body::before {
   transition: background var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
   position: relative;
   /* Allow spanning bars with negative margins to bleed past padding */
   overflow: visible;
@@ -1158,6 +1189,20 @@ body::before {
 .cal-cell.empty {
   cursor: default;
   background: rgba(0, 0, 0, 0.15);
+}
+
+/* Adjacent-month overflow cells — dimmed but real dates */
+.cal-cell.overflow {
+  background: rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.cal-cell.overflow .cal-day-num {
+  opacity: 0.35;
+}
+
+.cal-cell.overflow:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .cal-cell.today .cal-day-num {
@@ -1195,30 +1240,90 @@ body::before {
   color: var(--text-primary);
 }
 
+.cal-cell-add-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition), color var(--transition), transform var(--transition);
+  padding: 0;
+  line-height: 1;
+  z-index: 2;
+}
+
+.cal-cell:hover .cal-cell-add-btn {
+  opacity: 1;
+}
+
+.cal-cell-add-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: scale(1.15);
+}
+
 /* ── Event Pills ───────────────────────────────────────────────── */
 .cal-events {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
   overflow: visible;
 }
 
 .cal-event-pill {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.5;
+  padding: 6px 8px;
+  border-radius: 5px;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
   cursor: pointer;
-  /* Fixed height keeps spanning bars uniform across all cells */
-  height: 18px;
+  min-height: 34px;
   box-sizing: border-box;
   display: flex;
+  align-items: flex-start;
+  position: relative;
+  user-select: none;
+}
+
+/* Drag handles on the left/right edges of spanning pills */
+.cal-pill-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 3;
+}
+.cal-pill-handle--left  { left: 0;  border-radius: 4px 0 0 4px; }
+.cal-pill-handle--right { right: 0; border-radius: 0 4px 4px 0; }
+.cal-event-pill:hover .cal-pill-handle {
+  opacity: 1;
+}
+.cal-pill-handle::after {
+  content: '';
+  width: 2px;
+  height: 60%;
+  background: currentColor;
+  border-radius: 2px;
+  opacity: 0.6;
 }
 
 .cal-event-pill--due {
@@ -1379,4 +1484,267 @@ body::before {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ── DatePicker ────────────────────────────────────────────────── */
+.dp-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.dp-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 14px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  color: var(--text-primary);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.dp-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.dp-trigger--open {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.dp-icon {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.dp-value {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+.dp-placeholder {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.dp-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--text-muted);
+  transition: background var(--transition), color var(--transition);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.dp-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+}
+
+/* Popup */
+.dp-popup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 1000;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  width: 260px;
+  overflow: hidden;
+  animation: slideUp 0.15s ease;
+}
+
+/* Nav row */
+.dp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 10px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.dp-nav-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.dp-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  font-family: inherit;
+  padding: 0;
+}
+
+.dp-nav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Grid */
+.dp-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 8px 8px 4px;
+  gap: 2px;
+}
+
+.dp-dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+.dp-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+  font-family: inherit;
+  padding: 0;
+}
+
+.dp-cell:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.dp-cell--empty {
+  cursor: default;
+  pointer-events: none;
+}
+
+.dp-cell--today {
+  color: var(--accent-light);
+  font-weight: 700;
+}
+
+.dp-cell--today::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.dp-cell--today {
+  position: relative;
+}
+
+.dp-cell--selected {
+  background: var(--accent) !important;
+  color: #fff !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+}
+
+/* Footer */
+.dp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px 10px;
+  border-top: 1px solid var(--border);
+  gap: 8px;
+}
+
+.dp-footer-btn {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+
+.dp-footer-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.dp-footer-btn--clear {
+  background: none;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.dp-footer-btn--clear:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ── Responsive: collapsible sidebar + stacked calendar ────────── */
+@media (max-width: 1024px) {
+  /* Show the hamburger button */
+  .sidebar-toggle {
+    display: flex;
+  }
+
+  /* Show backdrop when sidebar is open */
+  .sidebar-overlay {
+    display: block;
+  }
+
+  /* Main content takes full width, add top padding for the toggle button */
+  .main-content {
+    margin-left: 0 !important;
+    padding: 72px 16px 24px;
+  }
+
+  /* Stack the side panel above the calendar */
+  .cal-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .cal-side {
+    order: -1;           /* moves "Next 7 Days" above the calendar */
+    position: static;    /* cancel sticky so it doesn't float oddly */
+    max-height: 320px;   /* keep it a reasonable height when stacked */
+  }
 }

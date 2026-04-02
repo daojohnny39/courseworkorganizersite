@@ -1,3 +1,5 @@
+PC:
+
 # Terminal 1 - Backend
 cd "e:\Personal Projects\PlaySite\backend"
 node server.js
@@ -8,6 +10,16 @@ npm run dev
 
 http://localhost:5173
 
-# To STOP the servers:
-Press Ctrl + C in each terminal window.
-If prompted "Terminate batch job (Y/N)?", type Y and press Enter.
+----------------------------------------------------------------------------------------
+
+MAC:
+
+# Terminal 1 - Backend
+cd /Users/johnnydao/Documents/Personal/Coding/Coursetrack/courseworkorganizersite/backend
+node server.js
+
+# Terminal 2 - Frontend  
+cd /Users/johnnydao/Documents/Personal/Coding/Coursetrack/courseworkorganizersite/frontend
+npm run dev
+
+http://localhost:5173

@@ -3,6 +3,7 @@ import { Plus, Search, Check, Pencil, Trash2, Clock } from 'lucide-react';
 import { getAssignments, getCourses, deleteAssignment, updateAssignment } from '../api';
 import AssignmentModal from '../components/AssignmentModal';
 import { useToast } from '../context/ToastContext';
+import { useSemester } from '../context/SemesterContext';
 
 function getDueInfo(dateStr, status) {
   if (!dateStr || status === 'completed') return null;
@@ -16,6 +17,7 @@ function getDueInfo(dateStr, status) {
 
 export default function Assignments() {
   const toast = useToast();
+  const { semester, year } = useSemester();
   const [assignments, setAssignments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,12 +26,13 @@ export default function Assignments() {
   const [modal, setModal]     = useState(null);
 
   const loadAll = () => {
-    Promise.all([getAssignments(), getCourses()])
+    setLoading(true);
+    Promise.all([getAssignments({ semester, year }), getCourses({ semester, year })])
       .then(([{ data: a }, { data: c }]) => { setAssignments(a); setCourses(c); })
       .finally(() => setLoading(false));
   };
 
-  useEffect(loadAll, []);
+  useEffect(loadAll, [semester, year]);
 
   const toggleComplete = async (a) => {
     const ns = a.status === 'completed' ? 'pending' : 'completed';
@@ -97,7 +100,7 @@ export default function Assignments() {
     <div className="fade-in">
       <div className="page-header">
         <h1 className="page-title">Assignments</h1>
-        <p className="page-subtitle">All your assignments across every course.</p>
+        <p className="page-subtitle">{semester} {year} — All your assignments across every course.</p>
       </div>
 
       <div className="toolbar">

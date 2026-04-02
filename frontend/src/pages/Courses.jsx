@@ -4,22 +4,25 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { getCourses, deleteCourse } from '../api';
 import CourseModal from '../components/CourseModal';
 import { useToast } from '../context/ToastContext';
+import { useSemester } from '../context/SemesterContext';
 
 
 export default function Courses() {
   const toast = useToast();
+  const { semester, year } = useSemester();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null); // null | 'add' | courseObject
 
   const load = () => {
-    getCourses()
+    setLoading(true);
+    getCourses({ semester, year })
       .then(({ data }) => setCourses(data))
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, []);
+  useEffect(load, [semester, year]);
 
   const handleDelete = async (course) => {
     if (!confirm(`Delete "${course.name}"? All assignments will also be removed.`)) return;
@@ -53,7 +56,7 @@ export default function Courses() {
     <div className="fade-in">
       <div className="page-header">
         <h1 className="page-title">My Courses</h1>
-        <p className="page-subtitle">Manage all your enrolled courses.</p>
+        <p className="page-subtitle">{semester} {year} — Manage all your enrolled courses.</p>
       </div>
 
       <div className="toolbar">

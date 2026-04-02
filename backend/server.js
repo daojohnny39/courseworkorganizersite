@@ -1,23 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const requireAuth = require('./middleware/auth');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
 app.use(express.json());
 
-// Routes
-app.use('/api/courses', require('./routes/courses'));
-app.use('/api/assignments', require('./routes/assignments'));
-app.use('/api', require('./routes/stats'));
+// Public routes (no auth required)
+app.use('/api/auth', require('./routes/auth'));
 
-// Health check
+// Health check (public)
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Protected routes (auth required)
+app.use('/api/courses',     requireAuth, require('./routes/courses'));
+app.use('/api/assignments', requireAuth, require('./routes/assignments'));
+app.use('/api',             requireAuth, require('./routes/stats'));
 
 // 404 handler
 app.use((req, res) => {

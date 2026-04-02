@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, X, Pencil } from 'lucide-react';
-import { getAssignments, getCourses } from '../api';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, X, Pencil, Plus } from 'lucide-react';
+import { getAssignments, getCourses, updateAssignment } from '../api';
 import AssignmentModal from '../components/AssignmentModal';
+import { useSemester } from '../context/SemesterContext';
 
 const TYPES = ['homework', 'exam', 'quiz', 'project', 'lab', 'reading', 'other'];
 const TYPE_COLORS = {
@@ -18,6 +19,14 @@ const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
+// Convert a #RRGGBB hex color to rgba(r,g,b,alpha)
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function getDaysInMonth(year, month) {
   return new Date(year, month + 1, 0).getDate();
 }
@@ -27,6 +36,7 @@ function getFirstDayOfMonth(year, month) {
 }
 
 export default function Dashboard() {
+  const { semester, year: semYear } = useSemester();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -36,21 +46,107 @@ export default function Dashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingAssignment, setEditingAssignment] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addDefaultDate, setAddDefaultDate] = useState('');
+  // Drag-to-resize state
+  const gridRef = useRef(null);
+  const dragRef = useRef(null); // { assignment, handle: 'left'|'right', origStart, origEnd }
+  const [dragPreview, setDragPreview] = useState(null); // { id, start_date, end_date }
+
+  // Build calendar grid (must be above useCallback hooks that reference these)
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
 
   useEffect(() => {
-    Promise.all([getAssignments(), getCourses()])
+    setLoading(true);
+    Promise.all([getAssignments({ semester, year: semYear }), getCourses({ semester, year: semYear })])
       .then(([aRes, cRes]) => {
         setAssignments(aRes.data);
         setCourses(cRes.data);
       })
       .finally(() => setLoading(false));
+  }, [semester, semYear]);
+
+  // ── Drag helpers ───────────────────────────────────────────────
+  // Convert a mouse position to a YYYY-MM-DD date by finding the calendar
+  // cell element under the cursor (avoids all row/column math bugs).
+  const clientXYToDate = useCallback((clientX, clientY) => {
+    // Temporarily hide the pill being dragged so elementFromPoint finds the cell beneath
+    let el = document.elementFromPoint(clientX, clientY);
+    // Walk up the DOM to find a cal-cell with a data-date attribute
+    while (el && !el.dataset.calDate) {
+      el = el.parentElement;
+    }
+    return el ? el.dataset.calDate : null;
   }, []);
 
+  const startDrag = useCallback((e, assignment, handle) => {
+    e.stopPropagation();
+    e.preventDefault();
+    dragRef.current = {
+      assignment,
+      handle,
+      origStart: assignment.start_date,
+      origEnd: assignment.end_date,
+    };
+    setDragPreview({ id: assignment.id, start_date: assignment.start_date, end_date: assignment.end_date });
+
+    const onMove = (ev) => {
+      const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+      const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+      const date = clientXYToDate(clientX, clientY);
+      if (!date || !dragRef.current) return;
+      const { handle: h, origStart, origEnd } = dragRef.current;
+      if (h === 'left') {
+        // Don't allow start to pass end
+        if (origEnd && date > origEnd) return;
+        setDragPreview(p => ({ ...p, start_date: date }));
+      } else {
+        if (origStart && date < origStart) return;
+        setDragPreview(p => ({ ...p, end_date: date }));
+      }
+    };
+
+    const onUp = async () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      if (!dragRef.current || !dragPreviewRef.current) return;
+      const { assignment: a } = dragRef.current;
+      const preview = dragPreviewRef.current;
+      dragRef.current = null;
+      setDragPreview(null);
+      try {
+        const updated = await updateAssignment(a.id, {
+          start_date: preview.start_date,
+          end_date: preview.end_date,
+        });
+        setAssignments(prev => prev.map(x => x.id === a.id ? { ...x, ...updated.data } : x));
+      } catch {
+        // revert silently — UI will snap back since dragPreview is cleared
+      }
+    };
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }, [clientXYToDate]);
+
+  // Keep a ref in sync with dragPreview so the mouseup closure can read it
+  const dragPreviewRef = useRef(null);
+  useEffect(() => { dragPreviewRef.current = dragPreview; }, [dragPreview]);
+
   const handleSaveAssignment = (saved) => {
-    setAssignments(prev =>
-      prev.map(a => a.id === saved.id ? { ...a, ...saved } : a)
-    );
+    setAssignments(prev => {
+      const exists = prev.some(a => a.id === saved.id);
+      return exists ? prev.map(a => a.id === saved.id ? { ...a, ...saved } : a) : [...prev, saved];
+    });
     setEditingAssignment(null);
+    setShowAddModal(false);
+  };
+
+  const openAddModal = (dateKey) => {
+    setAddDefaultDate(dateKey || '');
+    setShowAddModal(true);
   };
 
   // Toggle a type filter; if it's already the only one active → clear all
@@ -94,9 +190,6 @@ export default function Dashboard() {
       const cur = new Date(start + 'T00:00:00');
       const last = new Date(end + 'T00:00:00');
       while (cur <= last) {
-        // Use local-time getters — toISOString() converts to UTC and
-        // shifts dates back for negative-offset timezones (e.g. US Eastern),
-        // causing the end date to be silently dropped.
         const y = cur.getFullYear();
         const m = String(cur.getMonth() + 1).padStart(2, '0');
         const d = String(cur.getDate()).padStart(2, '0');
@@ -108,11 +201,15 @@ export default function Dashboard() {
 
     const map = {};
     visibleAssignments.forEach(a => {
+      // Use live preview dates when this assignment is being dragged
+      const sd = (dragPreview && dragPreview.id === a.id) ? dragPreview.start_date : a.start_date;
+      const ed = (dragPreview && dragPreview.id === a.id) ? dragPreview.end_date   : a.end_date;
+
       let keys = [];
-      if (a.start_date && a.end_date) {
-        keys = expandRange(a.start_date, a.end_date);
-      } else if (a.start_date) {
-        keys = [a.start_date];
+      if (sd && ed) {
+        keys = expandRange(sd, ed);
+      } else if (sd) {
+        keys = [sd];
       } else if (a.due_date) {
         keys = [a.due_date];
       }
@@ -121,18 +218,20 @@ export default function Dashboard() {
       });
     });
     return map;
-  }, [visibleAssignments]);
+  }, [visibleAssignments, dragPreview]);
 
-  // Build calendar grid
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDay = getFirstDayOfMonth(year, month);
-  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
 
   // Assignments for the selected day panel
   const selectedKey = selectedDay
     ? `${year}-${String(month + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
     : null;
-  const selectedItems = selectedKey ? (byDate[selectedKey] || []) : [];
+  const selectedItems = selectedKey
+    ? (byDate[selectedKey] || []).slice().sort((a, b) => {
+        const as = a.start_date || a.due_date || '';
+        const bs = b.start_date || b.due_date || '';
+        return as.localeCompare(bs);
+      })
+    : [];
 
   // Upcoming: next 7 days – any assignment whose active range overlaps the window
   const upcoming = useMemo(() => {
@@ -168,7 +267,7 @@ export default function Dashboard() {
     <div className="fade-in">
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Your coursework calendar — see everything at a glance.</p>
+        <p className="page-subtitle">{semester} {semYear} — Your coursework calendar at a glance.</p>
       </div>
 
       {/* ── Type filters ─────────────────────────────────────────── */}
@@ -208,55 +307,114 @@ export default function Dashboard() {
         <div className="cal-card">
           {/* Month nav */}
           <div className="cal-nav">
-            <button className="btn btn-ghost btn-icon" onClick={prevMonth}>
-              <ChevronLeft size={18} />
-            </button>
             <h2 className="cal-month-title">
               {MONTH_NAMES[month]} {year}
             </h2>
-            <button className="btn btn-ghost btn-icon" onClick={nextMonth}>
-              <ChevronRight size={18} />
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button className="btn btn-ghost btn-icon" onClick={prevMonth}>
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                className="btn btn-primary btn-icon"
+                style={{ borderRadius: 8, width: 32, height: 32 }}
+                title="Add assignment"
+                onClick={() => openAddModal('')}
+              >
+                <Plus size={16} />
+              </button>
+              <button className="btn btn-ghost btn-icon" onClick={nextMonth}>
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Day-of-week headers */}
-          <div className="cal-grid">
+          <div className="cal-grid" ref={gridRef}>
             {DAYS_OF_WEEK.map(d => (
               <div key={d} className="cal-dow">{d}</div>
             ))}
 
             {/* Cells */}
-            {Array.from({ length: totalCells }, (_, i) => {
-              const dayNum = i - firstDay + 1;
-              const isValid = dayNum >= 1 && dayNum <= daysInMonth;
-              if (!isValid) return <div key={i} className="cal-cell empty" />;
+            {(() => {
+              // Adjacent month info for overflow cells
+              const prevMonthYear = month === 0 ? year - 1 : year;
+              const prevMonthIdx  = month === 0 ? 11 : month - 1;
+              const nextMonthYear = month === 11 ? year + 1 : year;
+              const nextMonthIdx  = month === 11 ? 0 : month + 1;
+              const daysInPrevMonth = getDaysInMonth(prevMonthYear, prevMonthIdx);
 
-              const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-              const items = byDate[key] || [];
-              const isToday = dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-              const isSelected = dayNum === selectedDay;
+              return Array.from({ length: totalCells }, (_, i) => {
+                const dayNum = i - firstDay + 1;
+                const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth;
+                const isLeading  = dayNum < 1;
+                // isTrailing = dayNum > daysInMonth
 
-              return (
-                <div
-                  key={i}
-                  className={`cal-cell${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}${items.length ? ' has-events' : ''}`}
-                  onClick={() => setSelectedDay(isSelected ? null : dayNum)}
-                >
-                  <span className="cal-day-num">{dayNum}</span>
+                // Resolve the real calendar date for every cell (including overflow)
+                let cellYear, cellMonth, cellDay;
+                if (isCurrentMonth) {
+                  cellYear = year; cellMonth = month; cellDay = dayNum;
+                } else if (isLeading) {
+                  cellYear = prevMonthYear; cellMonth = prevMonthIdx;
+                  cellDay  = daysInPrevMonth + dayNum; // dayNum <= 0 here
+                } else {
+                  cellYear = nextMonthYear; cellMonth = nextMonthIdx;
+                  cellDay  = dayNum - daysInMonth;
+                }
+
+                const key = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
+                const items = byDate[key] || [];
+                const isToday    = cellDay === today.getDate() && cellMonth === today.getMonth() && cellYear === today.getFullYear();
+                const isSelected = isCurrentMonth && dayNum === selectedDay;
+                const isOverflow = !isCurrentMonth;
+
+                const handleClick = isOverflow
+                  ? () => { isLeading ? prevMonth() : nextMonth(); }
+                  : () => setSelectedDay(isSelected ? null : dayNum);
+
+                return (
+                  <div
+                    key={i}
+                    data-cal-date={key}
+                    className={`cal-cell${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}${items.length ? ' has-events' : ''}${isOverflow ? ' overflow' : ''}`}
+                    onClick={handleClick}
+                  >
+                    <span className="cal-day-num">{cellDay}</span>
+                    {/* Add-button only on current-month cells */}
+                    {!isOverflow && (
+                      <button
+                        className="cal-cell-add-btn"
+                        title="Add assignment on this day"
+                        onClick={(e) => { e.stopPropagation(); openAddModal(key); }}
+                      >
+                        <Plus size={11} />
+                      </button>
+                    )}
 
                   {/* Event dots / pills */}
                   <div className="cal-events">
-                    {items.slice(0, 3).map((a, idx) => {
-                      const col = TYPE_COLORS[a.type] || TYPE_COLORS.other;
+                    {items.map((a, idx) => {
+                      // Course color takes priority; fall back to assignment-type palette
+                      const typeCol = TYPE_COLORS[a.type] || TYPE_COLORS.other;
+                      const dotColor  = a.course_color || typeCol.dot;
+                      const bgColor   = a.course_color ? hexToRgba(a.course_color, 0.18) : typeCol.bg;
+                      const textColor = a.course_color || typeCol.text;
                       const isDue = a.due_date === key;
 
+                      // Resolve dates: dragPreview overrides if this assignment is being dragged
+                      const preview = dragPreview && dragPreview.id === a.id ? dragPreview : null;
+                      const effectiveStart = preview ? preview.start_date : a.start_date;
+                      const effectiveEnd   = preview ? preview.end_date   : a.end_date;
+
                       // ── Spanning-bar geometry ─────────────────────────
-                      const hasRange = !!(a.start_date && a.end_date);
+                      const hasRange = !!(effectiveStart && effectiveEnd);
                       const colIndex = i % 7; // 0 = Sun … 6 = Sat
-                      // Cap the left side if: no range, task starts here, or new week row
-                      const capLeft = !hasRange || a.start_date === key || colIndex === 0;
+                      // Cap the left side if: no range, task starts here, new week row,
+                      // or first day of the displayed month (task carries over from prev month)
+                      const capLeft = !hasRange || effectiveStart === key || colIndex === 0 || dayNum === 1;
                       // Cap the right side if: no range, task ends here, or last col of week
-                      const capRight = !hasRange || a.end_date === key || colIndex === 6;
+                      const capRight = !hasRange || effectiveEnd === key || colIndex === 6;
+
+                      const isDragging = !!preview;
 
                       const radius = capLeft && capRight ? '4px'
                         : capLeft ? '4px 0 0 4px'
@@ -264,20 +422,19 @@ export default function Dashboard() {
                             : '0';
 
                       const pillStyle = {
-                        background: col.bg,
-                        color: col.text,
-                        borderLeft: capLeft ? `2px solid ${col.dot}` : 'none',
+                        background: bgColor,
+                        color: textColor,
+                        borderLeft: capLeft ? `2px solid ${dotColor}` : 'none',
                         borderRadius: radius,
                         // Bleed into cell padding so adjacent cells connect seamlessly
                         marginLeft: capLeft ? 0 : -8,
                         marginRight: capRight ? 0 : -8,
                         paddingLeft: capLeft ? 6 : 8,
                         paddingRight: capRight ? 6 : 8,
-                        ...(isDue ? {
-                          outline: '1.5px solid #f59e0b',
-                          outlineOffset: '-1px',
-                          boxShadow: '0 0 6px rgba(245,158,11,0.35)',
-                        } : {}),
+                        outline: isDragging ? `2px solid ${dotColor}` : (isDue ? '1.5px solid #f59e0b' : 'none'),
+                        outlineOffset: '-1px',
+                        boxShadow: isDragging ? `0 0 8px ${dotColor}88` : (isDue ? '0 0 6px rgba(245,158,11,0.35)' : 'none'),
+                        opacity: isDragging ? 0.85 : 1,
                       };
 
                       return (
@@ -286,24 +443,41 @@ export default function Dashboard() {
                           className="cal-event-pill"
                           style={pillStyle}
                           title={`${a.course_code ? a.course_code + ' · ' : ''}${a.title}${isDue ? ' ⚠ Due today!' : ''}`}
+                          onClick={e => { e.stopPropagation(); setEditingAssignment(a); }}
                         >
-                          {/* Only render text on the leftmost visible cell of a span */}
-                          {capLeft && a.course_code && (
-                            <span style={{ opacity: 0.65, fontWeight: 700, marginRight: 4 }}>
-                              {a.course_code}
-                            </span>
+                          {/* Left drag handle — only on the actual start cell */}
+                          {hasRange && capLeft && effectiveStart === key && (
+                            <span
+                              className="cal-pill-handle cal-pill-handle--left"
+                              onMouseDown={e => startDrag(e, a, 'left')}
+                            />
                           )}
-                          {capLeft && (a.title.length > 11 ? a.title.slice(0, 11) + '…' : a.title)}
+                          {/* Render text in all cells — visible on the leftmost, hidden on
+                              continuation cells so their height matches the start cell exactly */}
+                          <span style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 1, visibility: capLeft ? 'visible' : 'hidden' }}>
+                            {a.course_code && (
+                              <span style={{ opacity: 0.7, fontWeight: 800, fontSize: 9, letterSpacing: '0.05em', textTransform: 'uppercase', lineHeight: 1.2 }}>
+                                {a.course_code}
+                              </span>
+                            )}
+                            <span style={{ fontWeight: 600, lineHeight: 1.35 }}>{a.title}</span>
+                          </span>
+                          {/* Right drag handle — only on the actual end cell */}
+                          {hasRange && capRight && effectiveEnd === key && (
+                            <span
+                              className="cal-pill-handle cal-pill-handle--right"
+                              onMouseDown={e => startDrag(e, a, 'right')}
+                            />
+                          )}
                         </div>
                       );
                     })}
-                    {items.length > 3 && (
-                      <div className="cal-event-more">+{items.length - 3} more</div>
-                    )}
+
                   </div>
                 </div>
               );
-            })}
+              });
+            })()}
           </div>
         </div>
 
@@ -440,6 +614,17 @@ export default function Dashboard() {
           assignment={editingAssignment}
           courses={courses}
           onClose={() => setEditingAssignment(null)}
+          onSave={handleSaveAssignment}
+        />
+      )}
+
+      {/* ── Add Assignment Modal ─────────────────────────────────── */}
+      {showAddModal && (
+        <AssignmentModal
+          assignment={null}
+          defaultDate={addDefaultDate}
+          courses={courses}
+          onClose={() => setShowAddModal(false)}
           onSave={handleSaveAssignment}
         />
       )}

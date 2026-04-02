@@ -8,8 +8,16 @@ db.pragma('journal_mode = WAL');
 
 // Create tables
 db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS courses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
     name TEXT NOT NULL,
     code TEXT NOT NULL,
     instructor TEXT,
@@ -19,7 +27,8 @@ db.exec(`
     year INTEGER NOT NULL,
     grade TEXT,
     target_grade TEXT DEFAULT 'A',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS assignments (
@@ -28,6 +37,8 @@ db.exec(`
     title TEXT NOT NULL,
     description TEXT,
     type TEXT DEFAULT 'homework',
+    start_date TEXT,
+    end_date TEXT,
     due_date TEXT,
     grade REAL,
     max_grade REAL DEFAULT 100,
@@ -48,6 +59,33 @@ db.exec(`
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
     FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL
   );
+
+  CREATE TABLE IF NOT EXISTS semesters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    semester TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, semester, year),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
 `);
+
+// ── Migrations: add columns that didn't exist in earlier schema versions ──
+const assignmentCols = db.prepare('PRAGMA table_info(assignments)').all().map(c => c.name);
+if (!assignmentCols.includes('start_date')) {
+  db.exec('ALTER TABLE assignments ADD COLUMN start_date TEXT');
+  console.log('[db] Migration: added start_date column to assignments');
+}
+if (!assignmentCols.includes('end_date')) {
+  db.exec('ALTER TABLE assignments ADD COLUMN end_date TEXT');
+  console.log('[db] Migration: added end_date column to assignments');
+}
+
+const courseCols = db.prepare('PRAGMA table_info(courses)').all().map(c => c.name);
+if (!courseCols.includes('user_id')) {
+  db.exec('ALTER TABLE courses ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE');
+  console.log('[db] Migration: added user_id column to courses');
+}
 
 module.exports = db;

@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { createAssignment, updateAssignment } from '../api';
 import { useToast } from '../context/ToastContext';
+import DatePicker from './DatePicker';
 
 const TYPES = ['homework', 'exam', 'quiz', 'project', 'lab', 'reading', 'other'];
 const STATUSES = ['pending', 'in-progress', 'completed', 'missed'];
 
-export default function AssignmentModal({ assignment, courses, defaultCourseId, onClose, onSave }) {
+export default function AssignmentModal({ assignment, courses, defaultCourseId, defaultDate, onClose, onSave }) {
   const toast = useToast();
   const editing = !!assignment;
 
@@ -15,9 +16,9 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
     title: assignment?.title ?? '',
     description: assignment?.description ?? '',
     type: assignment?.type ?? 'homework',
-    start_date: assignment?.start_date ?? '',
+    start_date: assignment?.start_date ?? (defaultDate || ''),
     end_date: assignment?.end_date ?? '',
-    due_date: assignment?.due_date ?? '',
+    due_date: assignment?.due_date ?? (defaultDate || ''),
     status: assignment?.status ?? 'pending',
   });
   const [loading, setLoading] = useState(false);
@@ -99,17 +100,17 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Start Date</label>
-                <input className="form-input" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} />
+                <DatePicker value={form.start_date} onChange={v => set('start_date', v)} placeholder="Pick start date…" id="start-date-picker" />
               </div>
               <div className="form-group">
                 <label className="form-label">End Date</label>
-                <input className="form-input" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} />
+                <DatePicker value={form.end_date} onChange={v => set('end_date', v)} placeholder="Pick end date…" id="end-date-picker" />
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label">Due Date</label>
-              <input className="form-input" type="date" value={form.due_date} onChange={e => set('due_date', e.target.value)} />
+              <DatePicker value={form.due_date} onChange={v => set('due_date', v)} placeholder="Pick due date…" id="due-date-picker" />
             </div>
 
           </div>
