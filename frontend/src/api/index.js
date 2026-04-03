@@ -31,6 +31,11 @@ export const deleteAssignment = (id) => api.delete(`/assignments/${id}`);
 // ── Stats ────────────────────────────────────────────────────────
 export const getStats = (params) => api.get('/stats', { params });
 
+// ── Semesters ────────────────────────────────────────────────────
+export const getSemesters = () => api.get('/semesters');
+export const addSemester = (data) => api.post('/semesters', data);
+export const deleteSemester = (id) => api.delete(`/semesters/${id}`);
+
 // ── Auth ─────────────────────────────────────────────────────────
 export const authRegister = (data) => api.post('/auth/register', data);
 export const authLogin = (data) => api.post('/auth/login', data);

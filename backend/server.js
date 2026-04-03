@@ -21,6 +21,7 @@ app.get('/api/health', (req, res) => {
 // Protected routes (auth required)
 app.use('/api/courses',     requireAuth, require('./routes/courses'));
 app.use('/api/assignments', requireAuth, require('./routes/assignments'));
+app.use('/api/semesters',   requireAuth, require('./routes/semesters'));
 app.use('/api',             requireAuth, require('./routes/stats'));
 
 // 404 handler
