@@ -1,0 +1,25 @@
+# Dependencies - NEVER commit these, they are platform-specific
+node_modules/
+**/node_modules/
+
+# Environment variables - contain secrets
+.env
+.env.local
+.env.*.local
+
+# Database files - machine-specific state
+*.db
+*.db-shm
+*.db-wal
+
+# Frontend build output
+frontend/dist/
+frontend/.vite/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
