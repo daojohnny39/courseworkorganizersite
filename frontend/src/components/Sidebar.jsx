@@ -350,16 +350,14 @@ export default function Sidebar() {
               {label}
             </NavLink>
           ))}
-          {user?.has_canvas && (
-            <NavLink
-              to="/canvas"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-              onClick={handleNavClick}
-            >
-              <Link2 size={17} />
-              Canvas Sync
-            </NavLink>
-          )}
+          <NavLink
+            to="/canvas"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            onClick={handleNavClick}
+          >
+            <Link2 size={17} />
+            Calendar Feed
+          </NavLink>
         </nav>
 
         <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

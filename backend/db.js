@@ -70,42 +70,37 @@ db.exec(`
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS canvas_connections (
+  CREATE TABLE IF NOT EXISTS ics_connections (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL UNIQUE,
-    canvas_instance_url TEXT NOT NULL,
-    access_token TEXT NOT NULL,
-    refresh_token TEXT,
-    token_expires_at TEXT,
-    token_error TEXT,
+    ics_url_encrypted TEXT NOT NULL,
     last_sync_at TEXT,
+    last_sync_error TEXT,
     sync_enabled INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
 
-  CREATE TABLE IF NOT EXISTS canvas_course_map (
+  CREATE TABLE IF NOT EXISTS ics_course_map (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    canvas_course_id INTEGER NOT NULL,
+    course_name TEXT NOT NULL,
     course_id INTEGER,
     excluded INTEGER DEFAULT 0,
-    canvas_course_name TEXT,
-    canvas_enrollment_term TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(user_id, canvas_course_id),
+    UNIQUE(user_id, course_name),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL
   );
 
-  CREATE TABLE IF NOT EXISTS canvas_assignment_map (
+  CREATE TABLE IF NOT EXISTS ics_assignment_map (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    canvas_course_map_id INTEGER NOT NULL,
-    canvas_assignment_id INTEGER NOT NULL,
+    ics_course_map_id INTEGER NOT NULL,
+    ics_uid TEXT NOT NULL,
     assignment_id INTEGER,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(canvas_course_map_id, canvas_assignment_id),
-    FOREIGN KEY (canvas_course_map_id) REFERENCES canvas_course_map(id) ON DELETE CASCADE,
+    UNIQUE(ics_course_map_id, ics_uid),
+    FOREIGN KEY (ics_course_map_id) REFERENCES ics_course_map(id) ON DELETE CASCADE,
     FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL
   );
 `);
@@ -127,4 +122,57 @@ if (!courseCols.includes('user_id')) {
   console.log('[db] Migration: added user_id column to courses');
 }
 
+// ── Migration: drop old Canvas tables if they still exist ──
+db.exec(`
+  DROP TABLE IF EXISTS canvas_assignment_map;
+  DROP TABLE IF EXISTS canvas_course_map;
+  DROP TABLE IF EXISTS canvas_connections;
+`);
+
+/**
+ * Fix stale ICS-imported course codes where code was set equal to the course name.
+ * Extracts a proper code (e.g. "PHYSICS-240") using a regex pattern if possible.
+ * This runs once at startup as a lightweight migration.
+ */
+function fixStaleIcsCodes() {
+  try {
+    // Find ICS-linked courses where code is the same as the name (old sync behavior)
+    // or known bad sentinel values
+    const staleCourses = db.prepare(`
+      SELECT c.id, c.name, c.code
+      FROM courses c
+      INNER JOIN ics_course_map m ON m.course_id = c.id
+      WHERE c.code = c.name OR c.code = 'Imported' OR c.code = 'UNKNOWN'
+    `).all();
+
+    for (const course of staleCourses) {
+      const name = course.name || '';
+
+      // Pattern 1: already a short code like "PHYS 240" or "PHYSICS-210L"
+      let match = name.match(/^([A-Za-z]{2,10})[-\s]?(\d{3,4}[A-Za-z]*)$/);
+      if (match) {
+        const newCode = `${match[1].toUpperCase()}-${match[2].toUpperCase()}`;
+        db.prepare('UPDATE courses SET code = ? WHERE id = ?').run(newCode, course.id);
+        console.log(`[db] Fixed course code: "${course.name}" → "${newCode}"`);
+        continue;
+      }
+
+      // Pattern 2: number embedded anywhere in the name e.g. "Physics 240" or "Intro to Physics 240L"
+      match = name.match(/\b([A-Za-z]{3,10})\s*[-]?\s*(\d{3,4}[A-Za-z]?)\b/);
+      if (match) {
+        const newCode = `${match[1].toUpperCase()}-${match[2].toUpperCase()}`;
+        db.prepare('UPDATE courses SET code = ? WHERE id = ?').run(newCode, course.id);
+        console.log(`[db] Fixed course code: "${course.name}" → "${newCode}"`);
+      }
+    }
+
+    if (staleCourses.length > 0) {
+      console.log(`[db] fixStaleIcsCodes: checked ${staleCourses.length} ICS course(s)`);
+    }
+  } catch (err) {
+    console.error('[db] fixStaleIcsCodes error:', err.message);
+  }
+}
+
 module.exports = db;
+module.exports.fixStaleIcsCodes = fixStaleIcsCodes;

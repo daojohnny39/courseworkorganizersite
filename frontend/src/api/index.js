@@ -41,12 +41,13 @@ export const authRegister = (data) => api.post('/auth/register', data);
 export const authLogin = (data) => api.post('/auth/login', data);
 export const authMe = () => api.get('/auth/me');
 
-// ── Canvas ───────────────────────────────────────────────────────
-export const canvasConnect = (data) => api.post('/canvas-auth/connect', data);
-export const canvasSyncNow = () => api.post('/canvas/sync');
-export const canvasGetStatus = () => api.get('/canvas/status');
-export const canvasExcludeCourse = (canvasCourseId) => api.put(`/canvas/courses/${canvasCourseId}/exclude`);
-export const canvasIncludeCourse = (canvasCourseId) => api.put(`/canvas/courses/${canvasCourseId}/include`);
-export const canvasUpdateSettings = (data) => api.put('/canvas/settings', data);
+// ── ICS Feed ────────────────────────────────────────────────────
+export const icsConnect = (data) => api.post('/ics-feed/connect', data);
+export const icsDisconnect = () => api.delete('/ics-feed/disconnect');
+export const icsSyncNow = () => api.post('/ics/sync');
+export const icsGetStatus = () => api.get('/ics/status');
+export const icsExcludeCourse = (courseMapId) => api.put(`/ics/courses/${courseMapId}/exclude`);
+export const icsIncludeCourse = (courseMapId) => api.put(`/ics/courses/${courseMapId}/include`);
+export const icsUpdateSettings = (data) => api.put('/ics/settings', data);
 
 export default api;

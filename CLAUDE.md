@@ -75,6 +75,8 @@ users
 | `/api/courses/*` | `routes/courses.js` | Required |
 | `/api/assignments/*` | `routes/assignments.js` | Required |
 | `/api/semesters/*` | `routes/semesters.js` | Required |
+| `/api/ics-feed/*` | `routes/ics-feed.js` | Required |
+| `/api/ics/*` | `routes/ics-sync.js` | Required |
 | `/api/stats` | `routes/stats.js` | Required |
 
 ## Key Details

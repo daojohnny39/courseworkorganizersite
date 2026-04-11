@@ -92,8 +92,8 @@ router.get('/me', (req, res) => {
     const user = db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const canvasConn = db.prepare('SELECT id FROM canvas_connections WHERE user_id = ?').get(decoded.id);
-    user.has_canvas = !!canvasConn;
+    const icsConn = db.prepare('SELECT id FROM ics_connections WHERE user_id = ?').get(decoded.id);
+    user.has_ics_feed = !!icsConn;
 
     res.json({ user });
   } catch {
