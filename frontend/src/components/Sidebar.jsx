@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, ClipboardList, LogOut, Menu, X, ChevronDown, Plus, Check, Trash2, ChevronLeft, Loader } from 'lucide-react';
+import { LayoutDashboard, BookOpen, ClipboardList, LogOut, Menu, X, ChevronDown, Plus, Check, Trash2, ChevronLeft, Loader, Link2 } from 'lucide-react';
 import { useSemester } from '../context/SemesterContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -350,6 +350,16 @@ export default function Sidebar() {
               {label}
             </NavLink>
           ))}
+          {user?.has_canvas && (
+            <NavLink
+              to="/canvas"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              onClick={handleNavClick}
+            >
+              <Link2 size={17} />
+              Canvas Sync
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-footer" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

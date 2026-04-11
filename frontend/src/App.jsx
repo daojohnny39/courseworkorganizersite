@@ -6,6 +6,7 @@ import Courses      from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
 import Assignments  from './pages/Assignments';
 import Login        from './pages/Login';
+import CanvasSettings from './pages/CanvasSettings';
 import { ToastProvider } from './context/ToastContext';
 import { SemesterProvider } from './context/SemesterContext';
 import { AuthProvider } from './context/AuthContext';
@@ -20,6 +21,7 @@ function AppShell() {
           <Route path="/courses"      element={<Courses />} />
           <Route path="/courses/:id"  element={<CourseDetail />} />
           <Route path="/assignments"  element={<Assignments />} />
+          <Route path="/canvas"      element={<CanvasSettings />} />
           <Route path="*"            element={<Navigate to="/" replace />} />
         </Routes>
       </main>

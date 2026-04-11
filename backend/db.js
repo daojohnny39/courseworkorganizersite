@@ -69,6 +69,45 @@ db.exec(`
     UNIQUE(user_id, semester, year),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS canvas_connections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL UNIQUE,
+    canvas_instance_url TEXT NOT NULL,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT,
+    token_expires_at TEXT,
+    token_error TEXT,
+    last_sync_at TEXT,
+    sync_enabled INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS canvas_course_map (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    canvas_course_id INTEGER NOT NULL,
+    course_id INTEGER,
+    excluded INTEGER DEFAULT 0,
+    canvas_course_name TEXT,
+    canvas_enrollment_term TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, canvas_course_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS canvas_assignment_map (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    canvas_course_map_id INTEGER NOT NULL,
+    canvas_assignment_id INTEGER NOT NULL,
+    assignment_id INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(canvas_course_map_id, canvas_assignment_id),
+    FOREIGN KEY (canvas_course_map_id) REFERENCES canvas_course_map(id) ON DELETE CASCADE,
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL
+  );
 `);
 
 // ── Migrations: add columns that didn't exist in earlier schema versions ──

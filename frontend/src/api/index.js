@@ -41,4 +41,12 @@ export const authRegister = (data) => api.post('/auth/register', data);
 export const authLogin = (data) => api.post('/auth/login', data);
 export const authMe = () => api.get('/auth/me');
 
+// ── Canvas ───────────────────────────────────────────────────────
+export const canvasConnect = (data) => api.post('/canvas-auth/connect', data);
+export const canvasSyncNow = () => api.post('/canvas/sync');
+export const canvasGetStatus = () => api.get('/canvas/status');
+export const canvasExcludeCourse = (canvasCourseId) => api.put(`/canvas/courses/${canvasCourseId}/exclude`);
+export const canvasIncludeCourse = (canvasCourseId) => api.put(`/canvas/courses/${canvasCourseId}/include`);
+export const canvasUpdateSettings = (data) => api.put('/canvas/settings', data);
+
 export default api;

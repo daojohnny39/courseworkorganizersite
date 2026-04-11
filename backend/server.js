@@ -12,6 +12,7 @@ app.use(express.json());
 
 // Public routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/canvas-auth', require('./routes/canvas-auth'));
 
 // Health check (public)
 app.get('/api/health', (req, res) => {
@@ -22,6 +23,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/courses',     requireAuth, require('./routes/courses'));
 app.use('/api/assignments', requireAuth, require('./routes/assignments'));
 app.use('/api/semesters',   requireAuth, require('./routes/semesters'));
+app.use('/api/canvas',      requireAuth, require('./routes/canvas-sync'));
 app.use('/api',             requireAuth, require('./routes/stats'));
 
 // 404 handler
@@ -37,4 +39,10 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🎓 CourseTrack API running on http://localhost:${PORT}`);
+
+  // Periodic Canvas sync every 30 minutes
+  const { syncAllUsers } = require('./services/canvasSync');
+  setInterval(() => {
+    syncAllUsers().catch(err => console.error('[canvas-sync] periodic sync error:', err));
+  }, 30 * 60 * 1000);
 });

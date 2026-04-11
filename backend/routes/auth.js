@@ -91,6 +91,10 @@ router.get('/me', (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(decoded.id);
     if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const canvasConn = db.prepare('SELECT id FROM canvas_connections WHERE user_id = ?').get(decoded.id);
+    user.has_canvas = !!canvasConn;
+
     res.json({ user });
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' });

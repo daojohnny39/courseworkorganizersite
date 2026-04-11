@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff } from 'lucide-react';
-import { authLogin, authRegister } from '../api';
+import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff, ExternalLink, Key } from 'lucide-react';
+import { authLogin, authRegister, canvasConnect } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
@@ -13,6 +13,9 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [canvasUrl, setCanvasUrl] = useState('');
+  const [canvasToken, setCanvasToken] = useState('');
+  const [showCanvasForm, setShowCanvasForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -309,6 +312,173 @@ export default function Login() {
             {tab === 'login' ? 'Sign up' : 'Sign in'}
           </button>
         </p>
+
+        {/* Canvas divider */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          margin: '24px 0 16px',
+        }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>OR</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        {/* Canvas registration */}
+        {!showCanvasForm ? (
+          <button
+            onClick={() => setShowCanvasForm(true)}
+            style={{
+              width: '100%',
+              padding: '11px',
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 10,
+              color: 'var(--text-primary)',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              transition: 'var(--transition)',
+            }}
+          >
+            <ExternalLink size={16} />
+            Register with Canvas LMS
+          </button>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
+                Canvas Instance URL
+              </label>
+              <input
+                type="text"
+                value={canvasUrl}
+                onChange={e => setCanvasUrl(e.target.value)}
+                placeholder="canvas.university.edu"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  color: 'var(--text-primary)',
+                  fontSize: 14,
+                  outline: 'none',
+                  transition: 'border-color var(--transition)',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--border-focus)'}
+                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
+                Access Token
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Key size={15} style={{
+                  position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                  color: 'var(--text-muted)', pointerEvents: 'none',
+                }} />
+                <input
+                  type="password"
+                  value={canvasToken}
+                  onChange={e => setCanvasToken(e.target.value)}
+                  placeholder="Paste your Canvas access token"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 36px',
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    color: 'var(--text-primary)',
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color var(--transition)',
+                  }}
+                  onFocus={e => e.target.style.borderColor = 'var(--border-focus)'}
+                  onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                />
+              </div>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.4 }}>
+                Generate a token in Canvas: Account &rarr; Settings &rarr; New Access Token
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { setShowCanvasForm(false); setCanvasToken(''); setCanvasUrl(''); }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 10,
+                  color: 'var(--text-secondary)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!canvasUrl.trim() || !canvasToken.trim()) {
+                    setError('Canvas URL and access token are both required');
+                    return;
+                  }
+                  setLoading(true);
+                  setError('');
+                  try {
+                    const { data } = await canvasConnect({
+                      canvas_url: canvasUrl.trim(),
+                      access_token: canvasToken.trim(),
+                    });
+                    login(data.token, data.user);
+                    navigate('/', { replace: true });
+                  } catch (err) {
+                    setError(err.response?.data?.error || 'Failed to connect to Canvas');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading || !canvasUrl.trim() || !canvasToken.trim()}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  background: (canvasUrl.trim() && canvasToken.trim() && !loading) ? '#e44d26' : 'rgba(228,77,38,0.4)',
+                  border: 'none',
+                  borderRadius: 10,
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: (canvasUrl.trim() && canvasToken.trim() && !loading) ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                }}
+              >
+                {loading ? (
+                  <div style={{
+                    width: 14, height: 14,
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.7s linear infinite',
+                  }} />
+                ) : (
+                  <>
+                    <ExternalLink size={14} />
+                    Connect Canvas
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
