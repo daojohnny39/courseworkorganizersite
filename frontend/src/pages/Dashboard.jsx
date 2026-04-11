@@ -184,7 +184,6 @@ export default function Dashboard() {
   // Each assignment appears on every day from start_date → end_date.
   // Falls back to due_date when no range is set.
   const byDate = useMemo(() => {
-    // dateRange inline so the closure is always fresh
     const expandRange = (start, end) => {
       const days = [];
       const cur = new Date(start + 'T00:00:00');
@@ -199,9 +198,34 @@ export default function Dashboard() {
       return days;
     };
 
+    // Sort assignments into a stable global order before building the map so
+    // that spanning pills occupy the same row-index in every cell they touch.
+    // Priority: multi-day tasks first (longer spans before shorter), then
+    // single-day tasks — with start_date then id as tiebreakers for stability.
+    const spanDays = (a) => {
+      const sd = (dragPreview && dragPreview.id === a.id) ? dragPreview.start_date : a.start_date;
+      const ed = (dragPreview && dragPreview.id === a.id) ? dragPreview.end_date   : a.end_date;
+      if (!sd || !ed) return 0;
+      return (new Date(ed + 'T00:00:00') - new Date(sd + 'T00:00:00')) / 86400000 + 1;
+    };
+
+    const sorted = [...visibleAssignments].sort((a, b) => {
+      const aSpan = spanDays(a);
+      const bSpan = spanDays(b);
+      // Multi-day before single-day
+      if ((bSpan > 1) !== (aSpan > 1)) return bSpan > 1 ? 1 : -1;
+      // Longer spans first
+      if (bSpan !== aSpan) return bSpan - aSpan;
+      // Earlier start first
+      const aStart = a.start_date || a.due_date || '';
+      const bStart = b.start_date || b.due_date || '';
+      if (aStart !== bStart) return aStart.localeCompare(bStart);
+      // Stable tiebreaker
+      return a.id - b.id;
+    });
+
     const map = {};
-    visibleAssignments.forEach(a => {
-      // Use live preview dates when this assignment is being dragged
+    sorted.forEach(a => {
       const sd = (dragPreview && dragPreview.id === a.id) ? dragPreview.start_date : a.start_date;
       const ed = (dragPreview && dragPreview.id === a.id) ? dragPreview.end_date   : a.end_date;
 
