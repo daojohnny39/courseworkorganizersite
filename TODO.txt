@@ -1,0 +1,17 @@
+TODO:
+- Create a "RESET" button apart from the sync button for Canvas integration.
+    - This will do a complete reset of the Canvas integration.
+        - clearing start date, end date, status, and due date for all courses
+
+- Redo the auto sync so that the all of existing assignments stay the same (including due date) and only the new assignments are added.
+
+BUGS:
+- COMP_SCI-404 - task title contains the course code.
+
+IMPROVEMENTS:
+- Order the semesters list in ascending order.
+
+FUTURE IDEAS:
+- When syncing from Canvas, delete all assignments before the current date.
+- Adding a reminders/notes system.
+- Sorting for assignments tab.

@@ -1022,7 +1022,7 @@ body::before {
 }
 
 /* ── Responsive ────────────────────────────────────────────────── */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -1117,7 +1117,7 @@ body::before {
 /* ── Calendar Layout ────────────────────────────────────────────── */
 .cal-layout {
   display: grid;
-  grid-template-columns: 1fr 300px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: 16px;
   align-items: start;
 }
@@ -1450,6 +1450,90 @@ body::before {
   align-self: stretch;
 }
 
+.cal-side-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--border);
+  background: transparent;
+  flex-shrink: 0;
+  align-self: center;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.cal-side-check:hover {
+  transform: scale(1.08);
+}
+
+.cal-side-check.checked {
+  color: #fff;
+}
+
+.cal-side-item--done {
+  opacity: 0.6;
+}
+
+.cal-side-item--done .cal-side-title,
+.cal-side-item--done .cal-side-desc {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.cal-side-item--done:hover {
+  opacity: 0.85;
+}
+
+/* Due-today card highlight */
+.cal-side-item--due-today {
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.18), inset 0 0 0 1px rgba(245, 158, 11, 0.07);
+}
+
+.cal-side-item--due-today:hover {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* Due-date badge inside side panel cards */
+.cal-due-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  white-space: nowrap;
+}
+
+.cal-due-badge--urgent {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.cal-due-badge--today {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.5);
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18); }
+}
+
 .cal-side-info {
   flex: 1;
   min-width: 0;
@@ -1719,7 +1803,7 @@ body::before {
 }
 
 /* ── Responsive: collapsible sidebar + stacked calendar ────────── */
-@media (max-width: 1024px) {
+@media (max-width: 1280px) {
   /* Show the hamburger button */
   .sidebar-toggle {
     display: flex;

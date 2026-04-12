@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { createAssignment, updateAssignment } from '../api';
+import { createAssignment, updateAssignment, deleteAssignment } from '../api';
 import { useToast } from '../context/ToastContext';
 import DatePicker from './DatePicker';
 
 const TYPES = ['homework', 'exam', 'quiz', 'project', 'lab', 'reading', 'other'];
-const STATUSES = ['pending', 'in-progress', 'completed', 'missed'];
 
-export default function AssignmentModal({ assignment, courses, defaultCourseId, defaultDate, onClose, onSave }) {
+export default function AssignmentModal({ assignment, courses, defaultCourseId, defaultDate, onClose, onSave, onDelete }) {
   const toast = useToast();
   const editing = !!assignment;
 
@@ -22,6 +21,7 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
     status: assignment?.status ?? 'pending',
   });
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -82,19 +82,11 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
               <textarea className="form-textarea" placeholder="Any notes about this assignment…" value={form.description} onChange={e => set('description', e.target.value)} />
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">Type</label>
-                <select className="form-select" value={form.type} onChange={e => set('type', e.target.value)}>
-                  {TYPES.map(t => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select className="form-select" value={form.status} onChange={e => set('status', e.target.value)}>
-                  {STATUSES.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
+            <div className="form-group">
+              <label className="form-label">Type</label>
+              <select className="form-select" value={form.type} onChange={e => set('type', e.target.value)}>
+                {TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
             </div>
 
             <div className="form-row">
@@ -115,11 +107,36 @@ export default function AssignmentModal({ assignment, courses, defaultCourseId, 
 
           </div>
 
-          <div className="form-actions" style={{ padding: '0 24px 24px' }}>
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving…' : editing ? 'Save Changes' : 'Add Assignment'}
-            </button>
+          <div className="form-actions" style={{ padding: '0 24px 24px', justifyContent: 'space-between' }}>
+            {editing ? (
+              <button
+                type="button"
+                className="btn btn-danger"
+                disabled={deleting || loading}
+                onClick={async () => {
+                  if (!window.confirm('Delete this assignment? This cannot be undone.')) return;
+                  setDeleting(true);
+                  try {
+                    await deleteAssignment(assignment.id);
+                    toast('Assignment deleted.', 'success');
+                    onDelete?.(assignment.id);
+                    onClose();
+                  } catch {
+                    toast('Failed to delete assignment', 'error');
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            ) : <span />}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+              <button type="submit" className="btn btn-primary" disabled={loading}>
+                {loading ? 'Saving…' : editing ? 'Save Changes' : 'Add Assignment'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

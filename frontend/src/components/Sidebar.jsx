@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter'];
-const BREAKPOINT = 1024;
+const BREAKPOINT = 1280;
 
 // ── Semester Picker ────────────────────────────────────────────────
 function SemesterPicker() {

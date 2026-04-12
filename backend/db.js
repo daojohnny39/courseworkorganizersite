@@ -5,6 +5,8 @@ const db = new Database(path.join(__dirname, 'coursework.db'));
 
 // Enable WAL mode for performance
 db.pragma('journal_mode = WAL');
+// Enforce foreign key constraints (off by default in SQLite)
+db.pragma('foreign_keys = ON');
 
 // Create tables
 db.exec(`

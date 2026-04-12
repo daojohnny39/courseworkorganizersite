@@ -298,7 +298,12 @@ function syncAssignment(courseMap, event, results, assignmentTitle) {
     status: 'pending',
   };
 
-  if (!assignmentMap) {
+  const existingAssignment = assignmentMap && assignmentMap.assignment_id
+    ? db.prepare('SELECT id FROM assignments WHERE id = ?').get(assignmentMap.assignment_id)
+    : null;
+  const needsCreate = !assignmentMap || !assignmentMap.assignment_id || !existingAssignment;
+
+  if (needsCreate) {
     const result = db.prepare(`
       INSERT INTO assignments (course_id, title, description, type, due_date, status)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -308,12 +313,17 @@ function syncAssignment(courseMap, event, results, assignmentTitle) {
       assignmentData.due_date, assignmentData.status
     );
 
-    db.prepare(
-      'INSERT INTO ics_assignment_map (ics_course_map_id, ics_uid, assignment_id) VALUES (?, ?, ?)'
-    ).run(courseMap.id, uid, result.lastInsertRowid);
+    if (!assignmentMap) {
+      db.prepare(
+        'INSERT INTO ics_assignment_map (ics_course_map_id, ics_uid, assignment_id) VALUES (?, ?, ?)'
+      ).run(courseMap.id, uid, result.lastInsertRowid);
+    } else {
+      // Map row exists but assignment was deleted (assignment_id was SET NULL)
+      db.prepare('UPDATE ics_assignment_map SET assignment_id = ? WHERE id = ?').run(result.lastInsertRowid, assignmentMap.id);
+    }
 
     results.assignmentsCreated++;
-  } else if (assignmentMap.assignment_id) {
+  } else {
     db.prepare(`
       UPDATE assignments
       SET title = ?, description = ?, type = ?, due_date = ?
@@ -323,7 +333,6 @@ function syncAssignment(courseMap, event, results, assignmentTitle) {
       assignmentData.due_date,
       assignmentMap.assignment_id
     );
-
     results.assignmentsUpdated++;
   }
 }
