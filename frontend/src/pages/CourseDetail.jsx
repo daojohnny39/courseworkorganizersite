@@ -81,7 +81,7 @@ export default function CourseDetail() {
   const completed = assignments.filter(a => a.status === 'completed').length;
 
   return (
-    <div className="fade-in">
+    <div className="page-enter">
       {/* Back + Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 24 }}>
         <button className="btn btn-ghost btn-icon" onClick={() => navigate('/courses')} style={{ marginTop: 4 }}>
@@ -133,7 +133,7 @@ export default function CourseDetail() {
           <button className="btn btn-primary" onClick={() => setModal('add')}><Plus size={16}/>Add Assignment</button>
         </div>
       ) : (
-        <div className="assignment-list">
+        <div className="assignment-list stagger-children">
           {filtered.map(a => {
             const due = getDueInfo(a.due_date, a.status);
             return (

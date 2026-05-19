@@ -6,13 +6,13 @@ import { useSemester } from '../context/SemesterContext';
 
 const TYPES = ['homework', 'exam', 'quiz', 'project', 'lab', 'reading', 'other'];
 const TYPE_COLORS = {
-  homework: { bg: 'rgba(99,102,241,0.18)', text: '#818cf8', dot: '#6366f1' },
-  exam: { bg: 'rgba(239,68,68,0.18)', text: '#f87171', dot: '#ef4444' },
-  quiz: { bg: 'rgba(245,158,11,0.18)', text: '#fbbf24', dot: '#f59e0b' },
-  project: { bg: 'rgba(34,197,94,0.18)', text: '#4ade80', dot: '#22c55e' },
-  lab: { bg: 'rgba(56,189,248,0.18)', text: '#38bdf8', dot: '#06b6d4' },
-  reading: { bg: 'rgba(167,139,250,0.18)', text: '#a78bfa', dot: '#8b5cf6' },
-  other: { bg: 'rgba(148,163,184,0.18)', text: '#94a3b8', dot: '#64748b' },
+  homework: { bg: 'rgba(124,58,237,0.12)', text: '#7c3aed', dot: '#7c3aed' },
+  exam: { bg: 'rgba(239,68,68,0.12)', text: '#dc2626', dot: '#ef4444' },
+  quiz: { bg: 'rgba(245,158,11,0.12)', text: '#d97706', dot: '#f59e0b' },
+  project: { bg: 'rgba(16,185,129,0.12)', text: '#059669', dot: '#10b981' },
+  lab: { bg: 'rgba(59,130,246,0.12)', text: '#2563eb', dot: '#3b82f6' },
+  reading: { bg: 'rgba(167,139,250,0.12)', text: '#6d28d9', dot: '#8b5cf6' },
+  other: { bg: 'rgba(100,116,139,0.12)', text: '#475569', dot: '#64748b' },
 };
 
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -406,7 +406,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="fade-in">
+    <div className="page-enter">
       <div className="page-header">
         <h1 className="page-title">Dashboard</h1>
         <p className="page-subtitle">{semester} {semYear} — Your coursework calendar at a glance.</p>

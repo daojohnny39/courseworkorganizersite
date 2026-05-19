@@ -4,9 +4,9 @@ import { createCourse, updateCourse } from '../api';
 import { useToast } from '../context/ToastContext';
 
 const COLORS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
-  '#f97316', '#eab308', '#22c55e', '#14b8a6',
-  '#06b6d4', '#3b82f6',
+  '#7c3aed', '#8b5cf6', '#ec4899', '#ef4444',
+  '#f97316', '#eab308', '#10b981', '#14b8a6',
+  '#3b82f6', '#06b6d4',
 ];
 
 const SEMESTERS = ['Spring', 'Summer', 'Fall', 'Winter'];
@@ -20,7 +20,7 @@ export default function CourseModal({ course, onClose, onSave }) {
     code:       course?.code       ?? '',
     instructor: course?.instructor ?? '',
     credits:    course?.credits    ?? 3,
-    color:      course?.color      ?? '#6366f1',
+    color:      course?.color      ?? '#7c3aed',
     semester:   course?.semester   ?? 'Spring',
     year:       course?.year       ?? new Date().getFullYear(),
   });

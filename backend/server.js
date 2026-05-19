@@ -1,14 +1,17 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const requireAuth = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
-app.use(express.json());
+app.use(helmet());
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
 
 // Public routes (no auth required)
 app.use('/api/auth', require('./routes/auth'));
@@ -24,6 +27,7 @@ app.use('/api/assignments', requireAuth, require('./routes/assignments'));
 app.use('/api/semesters',   requireAuth, require('./routes/semesters'));
 app.use('/api/ics-feed',    requireAuth, require('./routes/ics-feed'));
 app.use('/api/ics',         requireAuth, require('./routes/ics-sync'));
+app.use('/api/events',      requireAuth, require('./routes/events'));
 app.use('/api',             requireAuth, require('./routes/stats'));
 
 // 404 handler

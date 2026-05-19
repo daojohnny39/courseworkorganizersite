@@ -97,7 +97,7 @@ export default function Assignments() {
   if (loading) return <div className="loading-screen"><div className="spinner" /><span>Loading assignments…</span></div>;
 
   return (
-    <div className="fade-in">
+    <div className="page-enter">
       <div className="page-header">
         <h1 className="page-title">Assignments</h1>
         <p className="page-subtitle">{semester} {year} — All your assignments across every course.</p>
@@ -134,7 +134,7 @@ export default function Assignments() {
           {!search && courses.length === 0 && <p style={{color:'var(--warning)'}}>Add a course first!</p>}
         </div>
       ) : (
-        <div className="assignment-list">
+        <div className="assignment-list stagger-children">
           {filtered.map(a => {
             const due = getDueInfo(a.due_date, a.status);
             return (

@@ -26,7 +26,8 @@ router.get('/', (req, res) => {
     const assignments = db.prepare(query).all(...params);
     res.json(assignments);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -41,7 +42,8 @@ router.get('/:id', (req, res) => {
     if (!assignment) return res.status(404).json({ error: 'Assignment not found' });
     res.json(assignment);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -63,7 +65,8 @@ router.post('/', (req, res) => {
     const assignment = db.prepare('SELECT * FROM assignments WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(assignment);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -97,7 +100,8 @@ router.put('/:id', (req, res) => {
     const assignment = db.prepare('SELECT * FROM assignments WHERE id = ?').get(req.params.id);
     res.json(assignment);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -113,7 +117,8 @@ router.delete('/:id', (req, res) => {
     db.prepare('DELETE FROM assignments WHERE id = ?').run(req.params.id);
     res.json({ message: 'Assignment deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

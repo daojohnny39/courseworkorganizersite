@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, ClipboardList, LogOut, Menu, X, ChevronDown, Plus, Check, Trash2, ChevronLeft, Loader, Link2 } from 'lucide-react';
+import { LayoutDashboard, CalendarClock, BookOpen, ClipboardList, LogOut, Menu, X, ChevronDown, Plus, Check, Trash2, ChevronLeft, Loader, Link2 } from 'lucide-react';
 import { useSemester } from '../context/SemesterContext';
 import { useAuth } from '../context/AuthContext';
 
 const navItems = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/schedule',    icon: CalendarClock,   label: 'Schedule' },
   { to: '/courses',     icon: BookOpen,        label: 'My Courses' },
   { to: '/assignments', icon: ClipboardList,   label: 'Assignments' },
 ];
@@ -78,7 +79,7 @@ function SemesterPicker() {
           background: 'rgba(255,255,255,0.05)',
           border: '1px solid var(--border)',
           borderRadius: 8,
-          color: selected ? 'var(--text-primary)' : 'var(--text-muted)',
+          color: selected ? 'var(--sidebar-text)' : 'var(--sidebar-text-muted)',
           fontSize: 13,
           fontWeight: 600,
           cursor: 'pointer',
@@ -332,7 +333,12 @@ export default function Sidebar() {
 
       <aside className={`sidebar${isOpen ? '' : ' sidebar--closed'}`}>
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">🎓</div>
+          <div className="sidebar-logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
           <span className="sidebar-logo-text">CourseTrack</span>
         </div>
 
@@ -374,7 +380,7 @@ export default function Sidebar() {
               padding: '10px 12px',
               background: 'rgba(255,255,255,0.04)',
               borderRadius: 10,
-              border: '1px solid var(--border)',
+              border: '1px solid var(--sidebar-border)',
             }}>
               <div style={{
                 width: 30, height: 30, borderRadius: '50%',
@@ -386,7 +392,7 @@ export default function Sidebar() {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
+                  fontSize: 12, fontWeight: 600, color: 'var(--sidebar-text)',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>
                   {user.email}
@@ -397,11 +403,11 @@ export default function Sidebar() {
                 title="Sign out"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+                  color: 'var(--sidebar-text-muted)', display: 'flex', alignItems: 'center',
                   padding: 4, borderRadius: 6, transition: 'color 0.15s', flexShrink: 0,
                 }}
                 onMouseEnter={e => e.currentTarget.style.color = 'var(--danger)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--sidebar-text-muted)'}
               >
                 <LogOut size={15} />
               </button>

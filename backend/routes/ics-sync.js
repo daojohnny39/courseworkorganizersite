@@ -10,8 +10,8 @@ router.post('/sync', async (req, res) => {
     const results = await syncUserICS(req.user.id);
     res.json(results);
   } catch (err) {
-    console.error('[ics-sync] manual sync error:', err);
-    res.status(500).json({ error: 'Sync failed', details: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -41,8 +41,8 @@ router.get('/status', (req, res) => {
       courses,
     });
   } catch (err) {
-    console.error('[ics-sync] status error:', err);
-    res.status(500).json({ error: 'Failed to get sync status' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -58,8 +58,8 @@ router.put('/courses/:id/exclude', (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('[ics-sync] exclude error:', err);
-    res.status(500).json({ error: 'Failed to exclude course' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -75,8 +75,8 @@ router.put('/courses/:id/include', (req, res) => {
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('[ics-sync] include error:', err);
-    res.status(500).json({ error: 'Failed to include course' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -98,8 +98,8 @@ router.put('/settings', (req, res) => {
 
     res.json({ success: true, sync_enabled });
   } catch (err) {
-    console.error('[ics-sync] settings error:', err);
-    res.status(500).json({ error: 'Failed to update settings' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

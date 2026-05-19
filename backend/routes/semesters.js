@@ -18,7 +18,8 @@ router.get('/', (req, res) => {
     ).all(req.user.id);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -51,7 +52,8 @@ router.post('/', (req, res) => {
       throw e;
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -63,7 +65,8 @@ router.delete('/:id', (req, res) => {
     db.prepare('DELETE FROM semesters WHERE id = ?').run(req.params.id);
     res.json({ message: 'Semester removed' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

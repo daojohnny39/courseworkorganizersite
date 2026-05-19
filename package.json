@@ -1,0 +1,24 @@
+{
+  "name": "courseworkorganizersite",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daojohnny39/courseworkorganizersite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daojohnny39/courseworkorganizersite/issues"
+  },
+  "homepage": "https://github.com/daojohnny39/courseworkorganizersite#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

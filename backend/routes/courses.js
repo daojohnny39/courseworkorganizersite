@@ -16,7 +16,8 @@ router.get('/', (req, res) => {
     const courses = db.prepare(query).all(...params);
     res.json(courses);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -29,7 +30,8 @@ router.get('/:id', (req, res) => {
     const assignments = db.prepare('SELECT * FROM assignments WHERE course_id = ? ORDER BY due_date ASC').all(req.params.id);
     res.json({ ...course, assignments });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -47,7 +49,8 @@ router.post('/', (req, res) => {
     const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(result.lastInsertRowid);
     res.status(201).json(course);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -76,7 +79,8 @@ router.put('/:id', (req, res) => {
     const course = db.prepare('SELECT * FROM courses WHERE id = ?').get(req.params.id);
     res.json(course);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -88,7 +92,8 @@ router.delete('/:id', (req, res) => {
     db.prepare('DELETE FROM courses WHERE id = ?').run(req.params.id);
     res.json({ message: 'Course deleted successfully' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

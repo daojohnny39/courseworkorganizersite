@@ -23,6 +23,15 @@ router.post('/connect', async (req, res) => {
       return res.status(400).json({ error: 'Invalid URL format' });
     }
 
+    if (url.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Calendar feed URL must use HTTPS' });
+    }
+
+    const hostname = url.hostname.toLowerCase();
+    if (/^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.|0\.0\.0\.0|::1|fd[0-9a-f]{2}:)/.test(hostname)) {
+      return res.status(400).json({ error: 'Private network addresses are not allowed' });
+    }
+
     if (!url.pathname.endsWith('.ics')) {
       return res.status(400).json({ error: 'URL must be an .ics calendar feed link' });
     }
@@ -32,9 +41,9 @@ router.post('/connect', async (req, res) => {
     try {
       events = await fetchAndParseICS(ics_url);
     } catch (err) {
+      console.error(err);
       return res.status(400).json({
         error: 'Could not fetch or parse the calendar feed. Make sure the URL is correct.',
-        details: err.message,
       });
     }
 
@@ -65,8 +74,8 @@ router.post('/connect', async (req, res) => {
       sync: syncResult,
     });
   } catch (err) {
-    console.error('[ics-feed] connect error:', err);
-    res.status(500).json({ error: 'Failed to connect calendar feed' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -85,8 +94,8 @@ router.delete('/disconnect', (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error('[ics-feed] disconnect error:', err);
-    res.status(500).json({ error: 'Failed to disconnect calendar feed' });
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

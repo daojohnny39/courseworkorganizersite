@@ -105,6 +105,27 @@ db.exec(`
     FOREIGN KEY (ics_course_map_id) REFERENCES ics_course_map(id) ON DELETE CASCADE,
     FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL
   );
+
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    course_id INTEGER,
+    semester TEXT NOT NULL,
+    year INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    location TEXT,
+    type TEXT DEFAULT 'class',
+    days_of_week TEXT,
+    start_time TEXT,
+    end_time TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    notes TEXT,
+    color TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL
+  );
 `);
 
 // ── Migrations: add columns that didn't exist in earlier schema versions ──

@@ -53,7 +53,7 @@ export default function Courses() {
   if (loading) return <div className="loading-screen"><div className="spinner" /><span>Loading courses…</span></div>;
 
   return (
-    <div className="fade-in">
+    <div className="page-enter">
       <div className="page-header">
         <h1 className="page-title">My Courses</h1>
         <p className="page-subtitle">{semester} {year} — Manage all your enrolled courses.</p>
@@ -86,9 +86,9 @@ export default function Courses() {
           {!search && <button className="btn btn-primary" onClick={() => setModal('add')}><Plus size={16}/>Add First Course</button>}
         </div>
       ) : (
-        <div className="courses-grid">
+        <div className="courses-grid stagger-children">
           {filtered.map(course => (
-            <div key={course.id} className="course-card" style={{ position: 'relative' }}>
+            <div key={course.id} className="course-card" style={{ position: 'relative', '--course-color': course.color + '55' }}>
               <div className="course-card-header" style={{ background: course.color }} />
               <div className="course-card-body">
                 <span className="course-code" style={{ color: course.color }}>{course.code}</span>

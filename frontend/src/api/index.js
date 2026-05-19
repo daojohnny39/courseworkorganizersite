@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -27,6 +27,12 @@ export const getAssignment = (id) => api.get(`/assignments/${id}`);
 export const createAssignment = (data) => api.post('/assignments', data);
 export const updateAssignment = (id, data) => api.put(`/assignments/${id}`, data);
 export const deleteAssignment = (id) => api.delete(`/assignments/${id}`);
+
+// ── Events (Schedule) ────────────────────────────────────────────
+export const getEvents = (params) => api.get('/events', { params });
+export const createEvent = (data) => api.post('/events', data);
+export const updateEvent = (id, data) => api.put(`/events/${id}`, data);
+export const deleteEvent = (id) => api.delete(`/events/${id}`);
 
 // ── Stats ────────────────────────────────────────────────────────
 export const getStats = (params) => api.get('/stats', { params });
